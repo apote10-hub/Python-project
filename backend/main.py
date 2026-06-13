@@ -17,6 +17,8 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+from routes.users import router as users_router
+app.include_router(users_router)
 
 @app.get("/")
 def root():
