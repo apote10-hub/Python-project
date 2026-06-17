@@ -25,11 +25,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+<<<<<<< HEAD
 # Register all routes
 app.include_router(auth.router, prefix="/auth", tags=["Auth"])
 app.include_router(products.router, prefix="/products", tags=["Products"])
 app.include_router(transactions.router, prefix="/transactions", tags=["Transactions"])
 app.include_router(analytics.router, prefix="/analytics", tags=["Analytics"])
+=======
+app.include_router(auth_router)
+from routes.users import router as users_router
+app.include_router(users_router)
+>>>>>>> origin/sagal/feature
 
 @app.get("/")
 def root():

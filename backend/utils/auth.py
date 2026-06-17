@@ -12,6 +12,7 @@ ALGORITHM = os.getenv("JWT_ALGORITHM")
 EXPIRE = int(os.getenv("JWT_EXPIRE_MINUTES"))
 
 def hash_password(password: str):
+    print(f"DEBUG hashing: type={type(password)}, value={password}")
     return pwd_context.hash(password)
 
 def verify_password(plain, hashed):

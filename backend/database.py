@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-DB_URL = "mysql+pymysql://root:A9823002150a.@localhost/smart_inventory"
+DB_URL = "mysql+pymysql://root:Sagaljhuppo456%40@localhost/smart_inventory"
 
 engine = create_engine(DB_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
