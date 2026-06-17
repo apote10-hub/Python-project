@@ -1,30 +1,35 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from database import engine, Base
+from routes.auth import router as auth_router
+from routes.products import router as products_router
+from routes.users import router as users_router
+from routes.stock import router as stock_router
+from routes.festivals import router as festivals_router
+from routes.weather import router as weather_router
+from routes.reports import router as reports_router
 
-# Import routers
-from routers import auth, products, transactions, analytics
+app = FastAPI(
+    title="Smart Inventory Management System",
+    description="Inventory management API built for the Nepali market",
+    version="1.0.0"
+)
 
-# Create all database tables
-Base.metadata.create_all(bind=engine)
-
-app = FastAPI(title="Smart Inventory Management System")
-
-# Allow frontend to talk to backend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"],
+    allow_headers=["*"]
 )
 
-# Register all routes
-app.include_router(auth.router, prefix="/auth", tags=["Auth"])
-app.include_router(products.router, prefix="/products", tags=["Products"])
-app.include_router(transactions.router, prefix="/transactions", tags=["Transactions"])
-app.include_router(analytics.router, prefix="/analytics", tags=["Analytics"])
+app.include_router(auth_router)
+app.include_router(products_router)
+app.include_router(users_router)
+app.include_router(stock_router)
+app.include_router(festivals_router)
+app.include_router(weather_router)
+app.include_router(reports_router)
 
 @app.get("/")
 def root():
-    return {"message": "Smart Inventory API is running!"}
+    return {"message": "Smart Inventory API is running", "version": "1.0.0"}
