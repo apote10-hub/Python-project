@@ -15,5 +15,21 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
-    allow_credentials=True
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
+
+app.include_router(auth_router)
+app.include_router(stock_router)
+app.include_router(festivals_router)
+app.include_router(weather_router)
+app.include_router(reports_router)
+
+@app.get("/")
+def root():
+    return {
+        "message": "Smart Inventory API is running",
+        "version": "1.0.0",
+        "date": "2026"
+    }
