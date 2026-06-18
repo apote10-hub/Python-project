@@ -16,7 +16,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth_router)
+app.include_router(auth_router) 
 
 @app.get("/")
 def root():
@@ -26,3 +26,5 @@ def root():
         "date": "2026"
     }
 
+from routes.reports import router as reports_router
+app.include_router(reports_router) 
