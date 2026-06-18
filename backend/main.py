@@ -18,7 +18,12 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+<<<<<<< HEAD
 app.include_router(stock_router)
+=======
+from routes.users import router as users_router
+app.include_router(users_router)
+>>>>>>> origin/sagal/feature
 
 @app.get("/")
 def root():
