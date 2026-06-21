@@ -10,11 +10,15 @@ export default function Dashboard() {
     const { user, logout } = useAuth()
     const navigate = useNavigate()
 
-    useEffect(() => {
-        api.get('/dashboard/stats').then(r => setStats(r.data))
-        api.get('/festivals/suggestions').then(r => setFestival(r.data))
-        api.get('/weather/suggestions').then(r => setWeather(r.data)).catch(() => {})
-    }, [])
+    const [topProducts, setTopProducts] = useState([])
+
+useEffect(() => {
+    api.get('/dashboard/stats').then(r => setStats(r.data))
+    api.get('/festivals/suggestions').then(r => setFestival(r.data))
+    api.get('/weather/suggestions').then(r => setWeather(r.data)).catch(() => {})
+    api.get('/reports/movement').then(r => setTopProducts(r.data.top_selling_products || []))
+}, [])
+    
 
     const handleLogout = () => { logout(); navigate('/login') }
 
@@ -48,12 +52,27 @@ export default function Dashboard() {
                 </div>
                 <div className='grid grid-cols-2 gap-4'>
                     {festival && festival.festival && (
-                        <div className='bg-white p-6 rounded-xl shadow'>
-                            <h3 className='font-bold text-blue-900 mb-2'>Festival Alert</h3>
-                            <p className='text-gray-700'>{festival.advice}</p>
-                            <p className='text-sm text-gray-500 mt-2'>{festival.days_until} days until {festival.festival}</p>
-                        </div>
-                    )}
+    <div className='bg-white p-6 rounded-xl shadow'>
+        <h3 className='font-bold text-blue-900 mb-2'>🎉 Festival Alert</h3>
+        <p className='text-gray-700 mb-3'>{festival.advice}</p>
+        <div className='bg-blue-50 rounded-lg p-4 text-center'>
+            <p className='text-sm text-gray-500 mb-1'>Days until {festival.festival}</p>
+            <div className='flex justify-center gap-4'>
+                <div className='bg-blue-900 text-white rounded-lg p-3 min-w-16'>
+                    <p className='text-3xl font-bold'>{Math.floor(festival.days_until / 30)}</p>
+                    <p className='text-xs'>Months</p>
+                </div>
+                <div className='bg-blue-900 text-white rounded-lg p-3 min-w-16'>
+                    <p className='text-3xl font-bold'>{festival.days_until % 30}</p>
+                    <p className='text-xs'>Days</p>
+                </div>
+            </div>
+            <p className='text-sm text-blue-700 mt-3 font-semibold'>
+                Stock up {festival.surge_multiplier}x on: {festival.stock_up_categories?.join(', ')}
+            </p>
+        </div>
+    </div>
+)}
                     {weather && !weather.error && (
                         <div className='bg-white p-6 rounded-xl shadow'>
                             <h3 className='font-bold text-blue-900 mb-2'>Weather Suggestions</h3>
@@ -61,6 +80,22 @@ export default function Dashboard() {
                             <p className='text-sm text-gray-500 mt-2'>{weather.city} — {weather.temperature_celsius}°C</p>
                         </div>
                     )}
+                    {topProducts.length > 0 && (
+    <div className='bg-white p-6 rounded-xl shadow mt-4'>
+        <h3 className='font-bold text-blue-900 mb-3'>🔥 Most Sold Products</h3>
+        <div className='space-y-2'>
+            {topProducts.map((p, i) => (
+                <div key={i} className='flex justify-between items-center py-2 border-b'>
+                    <div className='flex items-center gap-2'>
+                        <span className='bg-blue-900 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold'>{i + 1}</span>
+                        <span className='font-medium'>{p.name}</span>
+                    </div>
+                    <span className='text-blue-900 font-bold'>{p.units_sold} units sold</span>
+                </div>
+            ))}
+        </div>
+    </div>
+)}
                 </div>
             </div>
         </div>

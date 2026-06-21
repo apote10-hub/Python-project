@@ -79,23 +79,31 @@ export default function Products() {
                     </table>
                 </div>
             </div>
-            {showModal && (
-                <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center'>
-                    <div className='bg-white p-6 rounded-xl w-96'>
-                        <h3 className='font-bold text-blue-900 mb-4'>{editId ? 'Edit Product' : 'Add Product'}</h3>
-                        {['name','category','sku'].map(field => (
-                            <input key={field} placeholder={field} value={form[field] || ''} onChange={e => setForm({...form, [field]: e.target.value})} className='w-full border rounded p-2 mb-2' />
-                        ))}
-                        {['quantity','min_stock_level','buy_price','sell_price'].map(field => (
-                            <input key={field} type='number' placeholder={field} value={form[field] || 0} onChange={e => setForm({...form, [field]: Number(e.target.value)})} className='w-full border rounded p-2 mb-2' />
-                        ))}
-                        <div className='flex gap-2 mt-4'>
-                            <button onClick={handleSave} className='bg-blue-900 text-white px-4 py-2 rounded flex-1'>Save</button>
-                            <button onClick={() => { setShowModal(false); setEditId(null) }} className='bg-gray-300 px-4 py-2 rounded flex-1'>Cancel</button>
-                        </div>
-                    </div>
-                </div>
-            )}
+           {showModal && (
+    <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'>
+        <div className='bg-white p-6 rounded-xl w-96 max-h-screen overflow-y-auto'>
+            <h3 className='font-bold text-blue-900 mb-4'>{editId ? 'Edit Product' : 'Add Product'}</h3>
+            <label className='text-sm text-gray-600'>Product Name</label>
+            <input placeholder='e.g. Rice 5kg' value={form.name || ''} onChange={e => setForm({...form, name: e.target.value})} className='w-full border rounded p-2 mb-3 mt-1' />
+            <label className='text-sm text-gray-600'>Category</label>
+            <input placeholder='e.g. food, electronics, clothing' value={form.category || ''} onChange={e => setForm({...form, category: e.target.value})} className='w-full border rounded p-2 mb-3 mt-1' />
+            <label className='text-sm text-gray-600'>SKU (unique product code)</label>
+            <input placeholder='e.g. RICE001' value={form.sku || ''} onChange={e => setForm({...form, sku: e.target.value})} className='w-full border rounded p-2 mb-3 mt-1' />
+            <label className='text-sm text-gray-600'>Quantity</label>
+            <input type='number' placeholder='0' value={form.quantity || 0} onChange={e => setForm({...form, quantity: Number(e.target.value)})} className='w-full border rounded p-2 mb-3 mt-1' />
+            <label className='text-sm text-gray-600'>Minimum Stock Level (alert threshold)</label>
+            <input type='number' placeholder='5' value={form.min_stock_level || 5} onChange={e => setForm({...form, min_stock_level: Number(e.target.value)})} className='w-full border rounded p-2 mb-3 mt-1' />
+            <label className='text-sm text-gray-600'>Buy Price (NPR)</label>
+            <input type='number' placeholder='0' value={form.buy_price || 0} onChange={e => setForm({...form, buy_price: Number(e.target.value)})} className='w-full border rounded p-2 mb-3 mt-1' />
+            <label className='text-sm text-gray-600'>Sell Price (NPR)</label>
+            <input type='number' placeholder='0' value={form.sell_price || 0} onChange={e => setForm({...form, sell_price: Number(e.target.value)})} className='w-full border rounded p-2 mb-3 mt-1' />
+            <div className='flex gap-2 mt-4'>
+                <button onClick={handleSave} className='bg-blue-900 text-white px-4 py-2 rounded flex-1'>Save</button>
+                <button onClick={() => { setShowModal(false); setEditId(null) }} className='bg-gray-300 px-4 py-2 rounded flex-1'>Cancel</button>
+            </div>
+        </div>
+    </div>
+)}
         </div>
     )
 }
