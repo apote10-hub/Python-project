@@ -1,55 +1,76 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import api from '../api/axios'
+import Sidebar from '../components/Sidebar'
+import Topbar from '../components/Topbar'
 
 export default function Transactions() {
     const [transactions, setTransactions] = useState([])
-    const { logout } = useAuth()
+    const [search, setSearch] = useState('')
+    const { user, logout } = useAuth()
     const navigate = useNavigate()
 
-    useEffect(() => {
-        api.get('/transactions').then(r => setTransactions(r.data))
-    }, [])
+    useEffect(() => { api.get('/transactions').then(r => setTransactions(r.data)) }, [])
+
+    const filtered = transactions.filter(t =>
+        t.type?.toLowerCase().includes(search.toLowerCase()) ||
+        String(t.product_id).includes(search) ||
+        t.note?.toLowerCase().includes(search.toLowerCase())
+    )
+
+    const handleLogout = () => { logout(); navigate('/login') }
 
     return (
-        <div className='min-h-screen bg-gray-100'>
-            <nav className='bg-blue-900 text-white px-6 py-4 flex justify-between items-center'>
-                <h1 className='text-xl font-bold'>Smart Inventory</h1>
-                <div className='flex gap-4'>
-                    <Link to='/' className='hover:underline'>Dashboard</Link>
-                    <Link to='/products' className='hover:underline'>Products</Link>
-                    <Link to='/stock' className='hover:underline'>Stock</Link>
-                    <Link to='/reports' className='hover:underline'>Reports</Link>
-                    <button onClick={() => { logout(); navigate('/login') }} className='bg-red-500 px-3 py-1 rounded'>Logout</button>
-                </div>
-            </nav>
-            <div className='p-6'>
-                <h2 className='text-2xl font-bold text-blue-900 mb-4'>Transaction History</h2>
-                <div className='bg-white rounded-xl shadow overflow-x-auto'>
-                    <table className='w-full text-sm'>
-                        <thead className='bg-blue-900 text-white'>
-                            <tr>{['ID','Product ID','Type','Quantity','Note','Date'].map(h => (
-                                <th key={h} className='p-3 text-left'>{h}</th>
-                            ))}</tr>
-                        </thead>
-                        <tbody>
-                            {transactions.map(t => (
-                                <tr key={t.id} className='hover:bg-gray-50 border-b'>
-                                    <td className='p-3'>{t.id}</td>
-                                    <td className='p-3'>{t.product_id}</td>
-                                    <td className='p-3'>
-                                        <span className={`px-2 py-1 rounded text-xs font-bold ${t.type === 'stock_in' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                            {t.type}
-                                        </span>
-                                    </td>
-                                    <td className='p-3'>{t.quantity}</td>
-                                    <td className='p-3'>{t.note || '-'}</td>
-                                    <td className='p-3'>{new Date(t.created_at).toLocaleString()}</td>
+        <div style={{display:'flex',minHeight:'100vh',background:'var(--color-background-tertiary)'}}>
+            <Sidebar active='Transactions' />
+            <div style={{marginLeft:'220px',flex:1,paddingTop:'56px'}}>
+                <Topbar user={user} onLogout={handleLogout} search={search} setSearch={setSearch} placeholder='Search transactions...' />
+                <div style={{padding:'20px'}}>
+                    <div style={{marginBottom:'20px'}}>
+                        <div style={{fontSize:'20px',fontWeight:'500',color:'var(--color-text-primary)'}}>Transaction History</div>
+                        <div style={{fontSize:'12px',color:'var(--color-text-secondary)',marginTop:'2px'}}>{transactions.length} total transactions</div>
+                    </div>
+
+                    <div style={{background:'var(--color-background-primary)',border:'0.5px solid var(--color-border-tertiary)',borderRadius:'12px',overflow:'hidden'}}>
+                        <table style={{width:'100%',borderCollapse:'collapse',fontSize:'13px'}}>
+                            <thead>
+                                <tr style={{background:'#E3F2FD'}}>
+                                    {['ID','Product ID','Type','Quantity','Note','Date & Time'].map(h => (
+                                        <th key={h} style={{padding:'12px 14px',textAlign:'left',fontSize:'12px',color:'#1565C0',fontWeight:'500'}}>{h}</th>
+                                    ))}
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {filtered.map(t => (
+                                    <tr key={t.id} style={{borderBottom:'0.5px solid var(--color-border-tertiary)'}}>
+                                        <td style={{padding:'10px 14px',color:'var(--color-text-secondary)'}}>{t.id}</td>
+                                        <td style={{padding:'10px 14px',fontWeight:'500'}}>{t.product_id}</td>
+                                        <td style={{padding:'10px 14px'}}>
+                                            <span style={{
+                                                background: t.type === 'stock_in' ? '#E3F2FD' : '#FCEBEB',
+                                                color: t.type === 'stock_in' ? '#1565C0' : '#A32D2D',
+                                                fontSize:'11px',padding:'3px 10px',borderRadius:'20px',fontWeight:'500'
+                                            }}>
+                                                {t.type === 'stock_in' ? '+ Stock In' : '- Stock Out'}
+                                            </span>
+                                        </td>
+                                        <td style={{padding:'10px 14px',fontWeight:'500',color: t.type === 'stock_in' ? '#1565C0' : '#E24B4A'}}>
+                                            {t.type === 'stock_in' ? '+' : '-'}{t.quantity}
+                                        </td>
+                                        <td style={{padding:'10px 14px',color:'var(--color-text-secondary)'}}>{t.note || '—'}</td>
+                                        <td style={{padding:'10px 14px',color:'var(--color-text-secondary)',fontSize:'12px'}}>{new Date(t.created_at).toLocaleString()}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        {filtered.length === 0 && (
+                            <div style={{padding:'40px',textAlign:'center',color:'var(--color-text-secondary)'}}>
+                                <i className='ti ti-file-text' style={{fontSize:'32px',display:'block',marginBottom:'8px'}}></i>
+                                No transactions found
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

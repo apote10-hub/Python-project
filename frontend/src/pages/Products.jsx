@@ -1,25 +1,29 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import api from '../api/axios'
+import Sidebar from '../components/Sidebar'
+import Topbar from '../components/Topbar'
 
 export default function Products() {
     const [products, setProducts] = useState([])
     const [showModal, setShowModal] = useState(false)
-    const [form, setForm] = useState({ name: '', category: '', sku: '', quantity: 0, min_stock_level: 5, buy_price: 0, sell_price: 0 })
+    const [form, setForm] = useState({ name:'', category:'', sku:'', quantity:0, min_stock_level:5, buy_price:0, sell_price:0, expiry_date:'' })
     const [editId, setEditId] = useState(null)
-    const { logout } = useAuth()
+    const [search, setSearch] = useState('')
+    const { user, logout } = useAuth()
     const navigate = useNavigate()
 
     const fetchProducts = () => api.get('/products').then(r => setProducts(r.data))
     useEffect(() => { fetchProducts() }, [])
 
     const handleSave = async () => {
-        if (editId) { await api.put(`/products/${editId}`, form) }
-        else { await api.post('/products', form) }
+        const data = {...form, expiry_date: form.expiry_date || null}
+        if (editId) { await api.put(`/products/${editId}`, data) }
+        else { await api.post('/products', data) }
         setShowModal(false)
         setEditId(null)
-        setForm({ name: '', category: '', sku: '', quantity: 0, min_stock_level: 5, buy_price: 0, sell_price: 0 })
+        setForm({ name:'', category:'', sku:'', quantity:0, min_stock_level:5, buy_price:0, sell_price:0, expiry_date:'' })
         fetchProducts()
     }
 
@@ -31,79 +35,117 @@ export default function Products() {
     }
 
     const handleEdit = (p) => {
-        setForm(p)
+        setForm({...p, expiry_date: p.expiry_date || ''})
         setEditId(p.id)
         setShowModal(true)
     }
 
+    const filtered = products.filter(p =>
+        p.name?.toLowerCase().includes(search.toLowerCase()) ||
+        p.category?.toLowerCase().includes(search.toLowerCase()) ||
+        p.sku?.toLowerCase().includes(search.toLowerCase())
+    )
+
+    const handleLogout = () => { logout(); navigate('/login') }
+
     return (
-        <div className='min-h-screen bg-gray-100'>
-            <nav className='bg-blue-900 text-white px-6 py-4 flex justify-between items-center'>
-                <h1 className='text-xl font-bold'>Smart Inventory</h1>
-                <div className='flex gap-4'>
-                    <Link to='/' className='hover:underline'>Dashboard</Link>
-                    <Link to='/stock' className='hover:underline'>Stock</Link>
-                    <Link to='/transactions' className='hover:underline'>Transactions</Link>
-                    <Link to='/reports' className='hover:underline'>Reports</Link>
-                    <button onClick={() => { logout(); navigate('/login') }} className='bg-red-500 px-3 py-1 rounded'>Logout</button>
-                </div>
-            </nav>
-            <div className='p-6'>
-                <div className='flex justify-between items-center mb-4'>
-                    <h2 className='text-2xl font-bold text-blue-900'>Products</h2>
-                    <button onClick={() => setShowModal(true)} className='bg-blue-900 text-white px-4 py-2 rounded-lg'>+ Add Product</button>
-                </div>
-                <div className='bg-white rounded-xl shadow overflow-x-auto'>
-                    <table className='w-full text-sm'>
-                        <thead className='bg-blue-900 text-white'>
-                            <tr>{['ID','Name','Category','SKU','Qty','Min','Buy Price','Sell Price','Actions'].map(h => <th key={h} className='p-3 text-left'>{h}</th>)}</tr>
-                        </thead>
-                        <tbody>
-                            {products.map(p => (
-                                <tr key={p.id} className={p.quantity <= p.min_stock_level ? 'bg-red-50' : 'hover:bg-gray-50'}>
-                                    <td className='p-3'>{p.id}</td>
-                                    <td className='p-3 font-medium'>{p.name}</td>
-                                    <td className='p-3'>{p.category}</td>
-                                    <td className='p-3'>{p.sku}</td>
-                                    <td className={`p-3 font-bold ${p.quantity <= p.min_stock_level ? 'text-red-600' : ''}`}>{p.quantity}</td>
-                                    <td className='p-3'>{p.min_stock_level}</td>
-                                    <td className='p-3'>Rs. {p.buy_price}</td>
-                                    <td className='p-3'>Rs. {p.sell_price}</td>
-                                    <td className='p-3 flex gap-2'>
-                                        <button onClick={() => handleEdit(p)} className='bg-blue-500 text-white px-2 py-1 rounded text-xs'>Edit</button>
-                                        <button onClick={() => handleDelete(p.id)} className='bg-red-500 text-white px-2 py-1 rounded text-xs'>Delete</button>
-                                    </td>
+        <div style={{display:'flex',minHeight:'100vh',background:'var(--color-background-tertiary)'}}>
+            <Sidebar active='Products' />
+            <div style={{marginLeft:'220px',flex:1,paddingTop:'56px'}}>
+                <Topbar user={user} onLogout={handleLogout} search={search} setSearch={setSearch} placeholder='Search products...' />
+                <div style={{padding:'20px'}}>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'20px'}}>
+                        <div>
+                            <div style={{fontSize:'20px',fontWeight:'500',color:'var(--color-text-primary)'}}>Products</div>
+                            <div style={{fontSize:'12px',color:'var(--color-text-secondary)',marginTop:'2px'}}>{products.length} total products</div>
+                        </div>
+                        <button onClick={() => setShowModal(true)}
+                            style={{background:'#1565C0',color:'#fff',border:'none',borderRadius:'8px',padding:'8px 16px',fontSize:'13px',fontWeight:'500',cursor:'pointer',display:'flex',alignItems:'center',gap:'6px'}}>
+                            <i className='ti ti-plus'></i> Add Product
+                        </button>
+                    </div>
+
+                    <div style={{background:'var(--color-background-primary)',border:'0.5px solid var(--color-border-tertiary)',borderRadius:'12px',overflow:'hidden'}}>
+                        <table style={{width:'100%',borderCollapse:'collapse',fontSize:'13px'}}>
+                            <thead>
+                                <tr style={{background:'#E3F2FD'}}>
+                                    {['ID','Name','Category','SKU','Qty','Min Stock','Buy Price','Sell Price','Expiry','Status','Actions'].map(h => (
+                                        <th key={h} style={{padding:'12px 14px',textAlign:'left',fontSize:'12px',color:'#1565C0',fontWeight:'500'}}>{h}</th>
+                                    ))}
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {filtered.map(p => (
+                                    <tr key={p.id} style={{borderBottom:'0.5px solid var(--color-border-tertiary)',background: p.quantity <= p.min_stock_level ? '#FCEBEB' : 'transparent'}}>
+                                        <td style={{padding:'10px 14px',color:'var(--color-text-secondary)'}}>{p.id}</td>
+                                        <td style={{padding:'10px 14px',fontWeight:'500',color:'var(--color-text-primary)'}}>{p.name}</td>
+                                        <td style={{padding:'10px 14px'}}>
+                                            <span style={{background:'#E3F2FD',color:'#1565C0',fontSize:'11px',padding:'2px 8px',borderRadius:'20px'}}>{p.category}</span>
+                                        </td>
+                                        <td style={{padding:'10px 14px',color:'var(--color-text-secondary)',fontFamily:'monospace'}}>{p.sku}</td>
+                                        <td style={{padding:'10px 14px',fontWeight:'500',color: p.quantity <= p.min_stock_level ? '#E24B4A' : 'var(--color-text-primary)'}}>{p.quantity}</td>
+                                        <td style={{padding:'10px 14px',color:'var(--color-text-secondary)'}}>{p.min_stock_level}</td>
+                                        <td style={{padding:'10px 14px'}}>Rs. {p.buy_price}</td>
+                                        <td style={{padding:'10px 14px'}}>Rs. {p.sell_price}</td>
+                                        <td style={{padding:'10px 14px',color:'var(--color-text-secondary)'}}>{p.expiry_date || '—'}</td>
+                                        <td style={{padding:'10px 14px'}}>
+                                            {p.quantity <= p.min_stock_level
+                                                ? <span style={{background:'#FCEBEB',color:'#A32D2D',fontSize:'11px',padding:'2px 8px',borderRadius:'20px'}}>Low Stock</span>
+                                                : <span style={{background:'#E3F2FD',color:'#1565C0',fontSize:'11px',padding:'2px 8px',borderRadius:'20px'}}>In Stock</span>
+                                            }
+                                        </td>
+                                        <td style={{padding:'10px 14px'}}>
+                                            <div style={{display:'flex',gap:'6px'}}>
+                                                <button onClick={() => handleEdit(p)} style={{background:'#E3F2FD',color:'#1565C0',border:'none',borderRadius:'6px',padding:'4px 10px',fontSize:'12px',cursor:'pointer'}}>Edit</button>
+                                                <button onClick={() => handleDelete(p.id)} style={{background:'#FCEBEB',color:'#A32D2D',border:'none',borderRadius:'6px',padding:'4px 10px',fontSize:'12px',cursor:'pointer'}}>Delete</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        {filtered.length === 0 && (
+                            <div style={{padding:'40px',textAlign:'center',color:'var(--color-text-secondary)'}}>
+                                <i className='ti ti-box' style={{fontSize:'32px',display:'block',marginBottom:'8px'}}></i>
+                                No products found
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
-           {showModal && (
-    <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'>
-        <div className='bg-white p-6 rounded-xl w-96 max-h-screen overflow-y-auto'>
-            <h3 className='font-bold text-blue-900 mb-4'>{editId ? 'Edit Product' : 'Add Product'}</h3>
-            <label className='text-sm text-gray-600'>Product Name</label>
-            <input placeholder='e.g. Rice 5kg' value={form.name || ''} onChange={e => setForm({...form, name: e.target.value})} className='w-full border rounded p-2 mb-3 mt-1' />
-            <label className='text-sm text-gray-600'>Category</label>
-            <input placeholder='e.g. food, electronics, clothing' value={form.category || ''} onChange={e => setForm({...form, category: e.target.value})} className='w-full border rounded p-2 mb-3 mt-1' />
-            <label className='text-sm text-gray-600'>SKU (unique product code)</label>
-            <input placeholder='e.g. RICE001' value={form.sku || ''} onChange={e => setForm({...form, sku: e.target.value})} className='w-full border rounded p-2 mb-3 mt-1' />
-            <label className='text-sm text-gray-600'>Quantity</label>
-            <input type='number' placeholder='0' value={form.quantity || 0} onChange={e => setForm({...form, quantity: Number(e.target.value)})} className='w-full border rounded p-2 mb-3 mt-1' />
-            <label className='text-sm text-gray-600'>Minimum Stock Level (alert threshold)</label>
-            <input type='number' placeholder='5' value={form.min_stock_level || 5} onChange={e => setForm({...form, min_stock_level: Number(e.target.value)})} className='w-full border rounded p-2 mb-3 mt-1' />
-            <label className='text-sm text-gray-600'>Buy Price (NPR)</label>
-            <input type='number' placeholder='0' value={form.buy_price || 0} onChange={e => setForm({...form, buy_price: Number(e.target.value)})} className='w-full border rounded p-2 mb-3 mt-1' />
-            <label className='text-sm text-gray-600'>Sell Price (NPR)</label>
-            <input type='number' placeholder='0' value={form.sell_price || 0} onChange={e => setForm({...form, sell_price: Number(e.target.value)})} className='w-full border rounded p-2 mb-3 mt-1' />
-            <div className='flex gap-2 mt-4'>
-                <button onClick={handleSave} className='bg-blue-900 text-white px-4 py-2 rounded flex-1'>Save</button>
-                <button onClick={() => { setShowModal(false); setEditId(null) }} className='bg-gray-300 px-4 py-2 rounded flex-1'>Cancel</button>
-            </div>
-        </div>
-    </div>
-)}
+
+            {showModal && (
+                <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.4)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:100}}>
+                    <div style={{background:'white',borderRadius:'12px',padding:'24px',width:'420px',maxHeight:'90vh',overflowY:'auto'}}>
+                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'20px'}}>
+                            <div style={{fontSize:'16px',fontWeight:'500',color:'#1565C0'}}>{editId ? 'Edit Product' : 'Add New Product'}</div>
+                            <button onClick={() => { setShowModal(false); setEditId(null) }} style={{background:'none',border:'none',cursor:'pointer',fontSize:'20px',color:'#999'}}>×</button>
+                        </div>
+                        {[
+                            {label:'Product Name',key:'name',type:'text',placeholder:'e.g. Rice 5kg'},
+                            {label:'Category',key:'category',type:'text',placeholder:'e.g. food, electronics'},
+                            {label:'SKU (unique product code)',key:'sku',type:'text',placeholder:'e.g. RICE001'},
+                            {label:'Quantity',key:'quantity',type:'number',placeholder:'0'},
+                            {label:'Minimum Stock Level',key:'min_stock_level',type:'number',placeholder:'5'},
+                            {label:'Buy Price (NPR)',key:'buy_price',type:'number',placeholder:'0'},
+                            {label:'Sell Price (NPR)',key:'sell_price',type:'number',placeholder:'0'},
+                            {label:'Expiry Date (optional)',key:'expiry_date',type:'date',placeholder:''},
+                        ].map(field => (
+                            <div key={field.key} style={{marginBottom:'14px'}}>
+                                <label style={{fontSize:'12px',color:'#666',display:'block',marginBottom:'5px'}}>{field.label}</label>
+                                <input type={field.type} placeholder={field.placeholder}
+                                    value={form[field.key] ?? ''}
+                                    onChange={e => setForm({...form, [field.key]: field.type === 'number' ? Number(e.target.value) : e.target.value})}
+                                    style={{width:'100%',border:'0.5px solid #BBDEFB',borderRadius:'8px',padding:'9px 12px',fontSize:'13px',outline:'none'}} />
+                            </div>
+                        ))}
+                        <div style={{display:'flex',gap:'10px',marginTop:'8px'}}>
+                            <button onClick={handleSave} style={{flex:1,background:'#1565C0',color:'#fff',border:'none',borderRadius:'8px',padding:'10px',fontSize:'13px',fontWeight:'500',cursor:'pointer'}}>Save Product</button>
+                            <button onClick={() => { setShowModal(false); setEditId(null) }} style={{flex:1,background:'#f5f5f5',color:'#666',border:'none',borderRadius:'8px',padding:'10px',fontSize:'13px',cursor:'pointer'}}>Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

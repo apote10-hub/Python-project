@@ -6,6 +6,8 @@ from routes.festivals import router as festivals_router
 from routes.weather import router as weather_router
 from routes.reports import router as reports_router
 from routes.products import router as products_router
+from routes.notifications import router as notifications_router
+
 
 
 app = FastAPI(
@@ -28,6 +30,7 @@ app.include_router(stock_router)
 app.include_router(festivals_router)
 app.include_router(weather_router)
 app.include_router(reports_router)
+app.include_router(notifications_router)
 
 @app.get("/")
 def root():
