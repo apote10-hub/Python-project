@@ -7,17 +7,16 @@ export default function Dashboard() {
     const [stats, setStats] = useState(null)
     const [festival, setFestival] = useState(null)
     const [weather, setWeather] = useState(null)
+    const [topProducts, setTopProducts] = useState([])
     const { user, logout } = useAuth()
     const navigate = useNavigate()
 
-    const [topProducts, setTopProducts] = useState([])
-
-useEffect(() => {
-    api.get('/dashboard/stats').then(r => setStats(r.data))
-    api.get('/festivals/suggestions').then(r => setFestival(r.data))
-    api.get('/weather/suggestions').then(r => setWeather(r.data)).catch(() => {})
-    api.get('/reports/movement').then(r => setTopProducts(r.data.top_selling_products || []))
-}, [])
+    useEffect(() => {
+        api.get('/dashboard/stats').then(r => setStats(r.data))
+        api.get('/festivals/suggestions').then(r => setFestival(r.data))
+        api.get('/weather/suggestions').then(r => setWeather(r.data)).catch(() => {})
+        api.get('/reports/movement').then(r => setTopProducts(r.data.top_selling_products || []))
+    }, [])
     
 
     const handleLogout = () => { logout(); navigate('/login') }
